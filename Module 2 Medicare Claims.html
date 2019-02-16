@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+
+    <script type = "text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type = "text/javascript" src = "https://www.google.com/jsapi"></script>
+	<script type = "text/javascript">
+	
+//Loading all the chart Libraries
+google.charts.load('current' ,{'packages' : ['corechart']});
+google.charts.load('current', {'packages':['treemap']});
+google.charts.load("current", {packages: ['annotationchart']});
+google.charts.load('current', { 'packages': ['map'] });
+google.charts.setOnLoadCallback(DrawingSheets);
+//Function where in all the responseHandlers are declared
+//A 'Response Handler' is the closure that is executed to parse the HTTP response that is returned from the server.	
+		
+	function DrawingSheets() {
+	drawSheetName('Medicareclaims','SELECT L,I,H',
+	                 ClaimSpecialityResponseHandler);    //Response Handler for Medicare claims based on state ,Doctors name, Prescribing rate ,Opioid claim amount
+					 
+    drawSheetName('SpecialityRate','SELECT A,D',
+	                 PrescribingRateResponseHandler);	 // Response Handler for the various speciality and the percentage with which they prescribe opioids
+					 
+	drawSheetName('Reimbursement','SELECT A,C,D',
+	                MedicaidByProductTypeResponseHandler);	//Response Handler for the categorization of medicaid amount based on the product type			 
+	 
+    drawSheetName('TopTenPharma' ,'SELECT A,C',
+	                             TopTenPharmaResponseHandler);  //Response Handler for the top ten pharma companies based on the medicaid amount
+   	
+    drawSheetName('AllDrugsDeaths', 'SELECT A,B,D,F,H,J',
+                              AllDrugsDeathsResponseHandler);  // Response Handler for deaths categorized by various drug types
+	drawSheetName('AllDrugsDeaths', 'SELECT A,B,D,F,H,J',
+                              AllDrugsDeathsComboResponseHandler); 	
+							  
+	 drawSheetName('TopStateMedicaidSpending', 'SELECT A,B',
+                              TopStateResponseHandler);         //Response Handler for the top ten states by medicaid spending
+			
+		}
+//Making use of the google API that is the google docs, linking the sheet to access the data		
+function drawSheetName(sheetName, query, responseHandler) {
+	var queryString = encodeURIComponent(query);
+	var query = new google.visualization.Query(
+	           
+              'https://docs.google.com/spreadsheets/d/1Kl2rn7X-60_VRwVDr2DdQpCgxqqYQkf2nBqbjYPac4Y/gviz/tq?sheet='
+			   + sheetName + '&headers=1&tq=' + queryString);
+	       query.send(responseHandler);
+	   
+	}
+	
+//Defining the response handler for claim speciality based on prescribing rate , doctor name , opioid claim amount. 
+//Goal is to identify any outliers if present 	
+function ClaimSpecialityResponseHandler(response) {
+		   var data = response.getDataTable();
+		    data.sort({column:1, desc:true});
+	
+
+          var options= {
+		  legend:'none',
+		  sizeAxis: {minSize :1, maxSize:4},
+		  vAxis :{
+          viewWindow: {max:23000,min:0} ,
+		  color: 'Red',
+		  title : 'Opioid claim amount'
+			     },     
+          height :500,
+		  width:900,
+          pointSize :5,			  
+		 hAxis:{max:100,
+		 min:0,
+         title : 'Opioid prescriber rate',
+		 color : 'Yellow'
+        },
+		colors: ['addd8e','#31a354']
+		};
+         
+		 var chart= new google.visualization.BubbleChart(
+		  document.getElementById('chart_div'));
+		  chart.draw(data,options);
+ }
+ 
+//Defining the response handler for speciality based on prescribing rate 
+ function PrescribingRateResponseHandler(response){
+  var data = response.getDataTable();
+			data.sort({column: 1, desc: true});
+			
+			var options = {
+				height: 400,
+				legend: 'none',
+				bars: 'horizontal',
+				colors:['#c51b8a'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				//chartArea: {top:10,left:30,width: '50%', height: '50%'},
+				title: 'Prescribing rate for various speciality for the year 2015',
+				vAxis: {title: 'speciality'},
+				hAxis: {title: 'Prescribing Rate'}
+			};
+			
+			var view = new google.visualization.DataView(data);
+			
+			view.setColumns([0,1,
+						{
+							calc: function(dt, row) {
+		    return Math.floor(dt.getFormattedValue(row, 1)) + '%';
+								},
+							sourceColumn: 1,
+							type: 'string',
+							role: 'annotation'
+						}]);
+			
+			var chart = new google.visualization.BarChart(
+				document.getElementById('Rate_div'));
+		
+			chart.draw(view, options);
+		} //End
+  
+  
+//Defining the response handler for  mediacaid amount based on product type
+//Basically looking for two products. Oxycontin and oxycodene	
+function MedicaidByProductTypeResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+				height: 400,
+				legend: 'none',
+				bars: 'horizontal',
+				colors:['#a8ddb5','#43a2ca'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Medicaid reimbursements of oxycodeone and oxycontin for the year 2017',
+				vAxis: {title: 'Product Name'},
+				hAxis: {
+				//viewWindow : {min:0, max:150000},
+				title: 'Amount in USD Millions'}
+			};
+        var chart = new google.visualization.BarChart(
+		document.getElementById('Medicaid_div'));
+		chart.draw(data, options);
+		
+	}
+  	
+//Defining the response handler for  mediacaid amount based on Pharma Companies	top 15 were selected
+function TopTenPharmaResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+				height: 600,
+				width :900,
+				legend: 'none',
+				bars: 'horizontal',
+				colors:['#d8b365'],
+				annotations: {alwaysOutside: true},
+				title: 'Pharma companies total amount spent',
+				vAxis: {
+				viewWindow :{maxValue : 10, minValue:0},
+				title: 'Company Name'},
+				hAxis: {
+				viewWindow :{maxValue : 70000, minValue:0},
+				title: 'Medicaid amount reimbursed  in USD Millions'}
+			};
+			
+			var view = new google.visualization.DataView(data);
+			
+			view.setColumns([0,1,
+						{
+							calc: function(dt, row) {
+		return Math.floor(dt.getFormattedValue(row, 1)) + 'M';
+								},
+							sourceColumn: 1,
+							type: 'string',
+							role: 'annotation'
+						}]);
+			
+        var chart = new google.visualization.BarChart(
+		document.getElementById('topten_div'));
+		chart.draw(view, options);
+		
+	}
+	
+	
+//Defining the response handler for different categories of drug type using a Column Chart from the year 1999 to 2016	
+function AllDrugsDeathsResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:5, desc:false});
+
+var options = {
+				height: 400,
+				//legend: 'none',
+				bars: 'horizontal',
+				colors:['#756bb1','#fec44f','#c51b8a','#e7e1ef','#c994c7','#dd1c77'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Death rate because of opioids misuse categorized by Types',
+				vAxis: {title: 'Deaths'},
+				hAxis: {title: 'Years'}
+			};
+			
+		var chart = new google.visualization.ColumnChart(
+		document.getElementById('DrugsDeaths_div'));
+		chart.draw(data, options);
+	}
+	
+	
+	
+//Defining the response handler for different categories of drug type using a Combo Chart from the year 1999 to 2016		
+function AllDrugsDeathsComboResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:5, desc:false});
+
+var options = {
+				height: 400,
+				//legend: 'none',
+				bars: 'horizontal',
+				colors:['#756bb1','#fec44f','#c51b8a','#e7e1ef','#c994c7','#dd1c77'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Death rate because of opioids misuse categorized by Types',
+				vAxis: {title: 'Deaths'},
+				hAxis: {title: 'Years'}
+			};
+			
+		var chart = new google.visualization.ComboChart(
+		document.getElementById('DrugsDeathsCombo_div'));
+		chart.draw(data, options);
+	} 
+	
+//Defining the response handler for top ten states in terma of medicaid spending	
+	
+function TopStateResponseHandler(response) {
+	
+    
+	 var data = response.getDataTable();
+	 data.sort({column:1, desc:true});
+	 
+	 var options ={
+	 title:'Top states my medicaid spending',
+	   vAxis: {
+	   
+	   title: 'States'},
+	  hAxis: {
+	 // viewWindow :{maxValue : 3, minValue:0},
+	  title:  'Spending in USD millions ($)'},
+	 height: 600,
+	 width :900,
+	 colors: ['#e41a1c']
+	 
+	 };
+	
+	 
+	 var chart = new google.visualization.BarChart(
+	             document.getElementById('topstates_div'));
+				 
+	chart.draw(data, options);
+	}
+	
+	
+		  </script>
+	</head>
+	<body>
+<h1><center>Medicare and Prescription Analysis </center></h1>	
+<br></br>
+<h3><center> Analysis of Medicaid amount reimbursed by Drug Companies for 2015</center></h3>
+<table><tr>
+<td><div id="topten_div" style="width: 800px; height: 500px"></div></td>
+<td><div class = "boxed"><p style ="font-family:verdana;">&emsp; &emsp; &emsp; &emsp;&emsp; &emsp;  Medicaid amount reimbursed is 174.6 Million across the 15 Pharma companies </p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp;  The distribution ranges from 1.8 Million to 65 Million </p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp;  Purdue Pharma accounts for 38 percent of the overall Medicaid amount reimbursed</p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp; Purdue Pharma is the company behind one of the most popular prescription opioids. </p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp; OxyContin first came on the market in 1996 and has since brought in billions of dollars of revenue. </p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp; Purdue’s patent for OxyContin was originally supposed to expire in 2013</p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp; By making minor tweaks to the drug’s chemical structure to create a slow-release pill the company markets as &emsp; &emsp; &emsp;&emsp;&emsp; &emsp; &emsp;&emsp;&emsp;“abuse-proof” .</p>
+<p style ="font-family:verdana;"> &emsp; &emsp; &emsp; &emsp;&emsp; &emsp; Purdue has been able to file new patents for OxyContin 13 times with the US Patent and Trademark Office over the  &emsp; &emsp; &emsp;&emsp;&emsp; &emsp; &emsp;&emsp;past decade, thereby extending its exclusive selling rights on the drug through 2030.</p>
+<p style="font-family:verdana;">&emsp; &emsp; &emsp; &emsp; &emsp;&emsp; <a href="https://www.marketplace.org/2018/02/10/health-care/uncertain-hour/oxycontin-maker-purdue-pharma-stop-marketing-opioids-doctors">OxyContin maker Purdue Pharma to stop marketing opioids to doctors - New initiative</a></p></td>
+</tr></table>
+<br></br>
+<br></br>
+<br></br>
+
+<h3><center> The Opioid Prescribing Rate by various Speciality </center></h3>
+<table><tr>
+<td><div id="Rate_div" style="width: 800px; height: 500px"></div><td>
+<td><p style="font-family:verdana;"> Maximum opioids are prescribed by these two specialities - Pain Management and Interventional Pain Management  </p>
+<p style="font-family:verdana;"> Pain Management and Interventional Pain Management have the highest Opioid prescribing rate that is about 57.67 % and 57.38 % </p>
+<p style="font-family:verdana;"> The CDC’s latest guideline for opioid prescribing, released in 2016, notes that most proof of how well opioids work is based on short-term pain. </p>
+<p style="font-family:verdana;"> It directs doctors to try nondrug treatments, such as physical therapy and talk therapy, as well as non-opioid treatments first.</p>
+<p style="font-family:verdana;"> If those aren’t enough, before adding opioids, doctors should work with patients to set realistic goals for easing pain, with an emphasis on making the body work better rather than eliminating pain.</p></td>
+</tr></table>
+<h3><center> Total Reimbursement amount of most commonly used opioids </center></h3>
+<table><tr>
+<td><div id="Medicaid_div" style="width: 800px; height: 500px"></div></td>
+<td><div class = "boxed"><p style ="font-family:verdana;">  The medicaid amount reimbursedment for Oxycodene is 140.9 Million (USD) and non medicaid amount reimbursed is 3.06 Million (USD) </p>
+<p style ="font-family:verdana;">  The medicaid amount reimbursedment for Oxycontin is 43.03 Million (USD) and non medicaid amount reimbursed is 0.854 Million (USD) </p>
+<p style ="font-family:verdana;"> OxyContin is the brand name for a time-released version of oxycodone, which is a narcotic analgesic used to treat pain. It can be used for injuries, cancer pain and even arthritis.</p>
+<p style ="font-family:verdana;">OxyContin doesn’t theoretically have to be taken as often as oxycodone, and the effects will span a longer period of time. Compared to the ability of OxyContin to treat pain for up to 12 hours, oxycodone usually lasts for around four to six hours.</p></td>
+
+</tr></table>
+<h3><center> Chart representing the total Opioid claim count, opioid prescribing rates and total claim amount </center> </h3>	
+<table><tr>
+<td><div id="chart_div" style="width: 900px; height: 500px"></div></td>
+<td><div class = "boxed"><p style="font-family:verdana;">  The major concern here are the Outliers.</p>
+<p style="font-family:verdana;">  One such Outlier is Mark Murphy from Pain Management Speciality in Alabama.</p>
+<p style="font-family:verdana;">   With an opioid claim amount of 22652, total claim amount of 34275 and prescribing rate of 66.09%</div></p>
+<p style="font-family:verdana;"> <a href="http://raycomgroup.worldnow.com/story/37538397/doctors-who-flood-the-country-with-opioids-face-little-scrutiny-repercussions">Murphy had been the No. 1 opioid prescriber in the federal Medicare program for years; that he closed his practices in Alabama when that state’s medical board accused him of writing excessive opioid prescriptions.</a></p>
+<p style="font-family:verdana;"> Medicare claims data for the year 2015.</p></td>
+</tr></table>
+
+<h3><center> Top States Medicaid spending analysis based on Opioids </center></h3>
+<table><tr>
+<td><div id="topstates_div" style="width: 700px; height: 500px"></div></td>
+<td><p style="font-family:verdana;">&emsp; &emsp; &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp;&emsp;&emsp; The overdose data is available for all states. But out of 50 states only 16 states collect data on causes of overdose</p>
+<p style="font-family:verdana;">&emsp; &emsp; &emsp; &emsp; &emsp;&emsp;&emsp; &emsp;&emsp; &emsp;&emsp; This chart shows only the top ten states out of sixteen that have collected detailed overdose data for the year 2017</p></td>
+</tr></table>
+<br></br>
+<br></br>
+<br></br>
+<br></br>
+<h3><center>Categorization of different opioids in use and related overdose deaths</center></h3>
+<table><tr>
+<td><div id="DrugsDeaths_div" style="width: 800px; height: 500px"></div></td>
+<td>&emsp; &emsp; &emsp; &emsp;<div id="DrugsDeathsCombo_div" style="width:800px; height: 500px"> </div></td>
+</tr></table>
+<table><tr>
+<td><h2><left> <a href="Module 1 Opioid Deaths.html">Module 1 - Understanding the Opioid Epidemic</a> </left> </h2></td>&emsp; &emsp; &emsp; &emsp; &emsp;&emsp; 
+
+<td><h2><right>&emsp; &emsp; &emsp; &emsp; &emsp;&emsp;  <a href="Module 3 Correlation.html">Module 3 - Factors affecting Opioids usage and related Deaths</a> </right></h2></td>
+</tr></table>
+</body>
+</html>
+	
+	
+	
+	

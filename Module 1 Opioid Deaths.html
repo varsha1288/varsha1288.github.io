@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+
+    <script type = "text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type = "text/javascript" src = "https://www.google.com/jsapi"></script>
+	<script type = "text/javascript">
+	
+//Loading all the chart Libraries
+google.charts.load('current' ,{'packages' : ['corechart']});
+google.charts.load('current', {'packages':['treemap']});
+google.charts.load("current", {packages: ['annotationchart']});
+google.charts.load('current', { 'packages': ['map'] });
+google.charts.load('current', {packages: ['table']});
+google.charts.setOnLoadCallback(DrawingSheets);
+	
+	
+//Function where in all the responseHandlers are declared
+//A 'Response Handler' is the closure that is executed to parse the HTTP response that is returned from the server.	
+	
+	
+	function DrawingSheets() {
+	
+	drawSheetName('USAGenderDeaths','SELECT A,D,F,B',
+	                 GenderTotalResponseHandler);		   //Response Handler to get the Death toll by Gender
+    drawSheetName('USAGenderDeaths','SELECT A,D,F',
+	                 GenderResponseHandler);		
+
+    drawSheetName('USAAgeDeaths', 'SELECT A,B,D,F,H,J,L',     
+                                AgeResponseHandler);        //Response Handler to get the Death toll by Age
+	drawSheetName('USAAgeDeaths', 'SELECT A,B,D,F,H,J,L',
+                                AgeDeathResponseHandler);		
+
+    drawSheetName('USAEthnicityDeaths', 'SELECT A,B,D,F',
+                                EthnicityResponseHandler);	//Response Handler to get the Death toll by Ethnicity
+    drawSheetName('USAEthnicityDeaths', 'SELECT A,B,D,F',
+                                EthnicityDeathResponseHandler);		
+								
+								
+    drawSheetName('DrugDeath','SELECT E,L',
+	                 DrugDeathYear17ResponseHandler);	    //Response Handler to get the Death toll for the year 2017
+	
+				 
+    drawSheetName('PercentChange','SELECT A,H',             //Response Handler to get the Death toll for the year 2015 to 2016
+	                 PercentChangeMapResponseHandler);		
+    drawSheetName('PercentChange','SELECT A,H',
+	                 PercentTableChangeNewResponseHandler);
+					 
+					 
+    drawSheetName('PercentChange2017','SELECT A,D',
+	                 PercentChangeResponseHandler);		  //Response Handler to get the Death toll for the year 2016 to 2017
+    drawSheetName('PercentChange2017','SELECT A,D',
+	                 PercentTableChangeResponseHandler);	
+					 
+					 
+    drawSheetName('Rate2015','SELECT A,C',          
+                      AdjustedDeathRate2015ResponseHandler)  //Response Handler to get the Death rate per 100,000 people for the year 2015
+    drawSheetName('Rate2016','SELECT A,B',
+                      AdjustedDeathRate2016ResponseHandler)  //Response Handler to get the Death rate per 100,000 people for the year  2016
+    drawSheetName('Difference','SELECT A,E',
+                      DifferenceResponseHandler)			//Response Handler to get the Death rate difference per 100,000 inbetween 2015 to 2016 					  
+}
+
+
+//Making use of the google API that is the google docs, linking the sheet to access the data
+function drawSheetName(sheetName, query, responseHandler) {
+	var queryString = encodeURIComponent(query);
+	var query = new google.visualization.Query(
+	           
+              'https://docs.google.com/spreadsheets/d/11jp5qXOGHrtzzBXLGimdDc48rXiT_P76x1ubfp3epe4/gviz/tq?sheet='
+			   + sheetName + '&headers=1&tq=' + queryString);
+	       query.send(responseHandler);
+	}
+
+	
+//Defining the Response handler for DEATHS based on GENDER from 1999 to 2016
+function GenderResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:2, desc:true});  
+
+var options = {
+				height: 400,
+				bars: 'horizontal',
+				colors:['#edf8b1','#2c7fb8'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Deaths from 1999 to 2015 based on gender.',
+				hAxis: {title: 'Deaths'},
+				vAxis: {title: 'Year'}
+			};			
+		
+//Making use of a stacked Bar Chart			
+        var chart = new google.visualization.BarChart(
+		document.getElementById('genderdeaths_div')); //Creating an object
+		chart.draw(data, options);
+	}
+				
+//Defining the Response handler for DEATHS based on GENDER from 1999 to 2016 using a Combo chart to check for increase or decrease in deaths for a more clearer picture
+function GenderTotalResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:3, desc:false});
+
+var options = {
+				height: 400,
+				//legend: 'none',
+				bars: 'horizontal',
+				colors:['#756bb1','#fdae6b','#fec44f'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Steady rise in the Death rate because of opioids misuse - Male Deaths higher compared to Female ',
+				hAxis: {title: 'Year'},
+				vAxis: {title: 'Deaths'}
+			};
+	    var chart = new google.visualization.ComboChart(
+		document.getElementById('gendertotal_div'));
+		chart.draw(data, options);
+	}
+
+//Defining the Response handler for DEATHS based on Age from 1999 to 2016
+function AgeResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:6, desc:false});
+
+var options = {
+				height: 400,
+				//legend: 'none',
+				bars: 'horizontal',
+				colors:['#756bb1','#fdae6b','#fec44f','#fa9fb5','#c51b8a','#2c7fb8'], //Specifying the range of colors
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Death rate because of opioids misuse categorized by Age',
+				hAxis: {title: 'Year'},
+				vAxis: {title: 'Deaths'}
+			};
+			
+				
+		
+			
+        var chart = new google.visualization.ColumnChart(
+		document.getElementById('Age_div'));
+		chart.draw(data, options);
+	}
+	
+	
+//Defining the Response handler for DEATHS based on Age from 1999 to 2016 using a Combo chart to check for increase or decrease in deaths for a more clearer picture	
+function AgeDeathResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:6, desc:false});
+
+var options = {
+				height: 400,
+				bars: 'horizontal',
+				colors:['#756bb1','#fdae6b','#fec44f','#fa9fb5','#c51b8a','#2c7fb8'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Death rate because of opioids misuse categorized by Age. Most deaths between 45 to 54 age group',
+				hAxis: {title: 'Year'},
+				vAxis: {title: 'Deaths'}
+			};
+		var chart = new google.visualization.ComboChart(
+		document.getElementById('AgeDeath_div')); //Passing the object
+		chart.draw(data, options);
+    }
+	
+	
+	
+//Defining the Response handler for DEATHS based on Ethnicity from 1999 to 2016	
+function EthnicityResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:3, desc:false});
+
+var options = {
+				height: 400,
+				//legend: 'none',
+				bars: 'horizontal',
+				colors:['#756bb1','#fec44f','#c51b8a'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Death rate because of opioids misuse categorized by Ethnicity',
+				hAxis: {title: 'Year'},
+				vAxis: {title: 'Deaths'}
+			};
+		var chart = new google.visualization.ColumnChart(
+		document.getElementById('Ethnicity_div'));
+		chart.draw(data, options);
+	}
+	
+	
+	
+//Defining the Response handler for DEATHS based on Ethnicity from 1999 to 2016 using a Combo chart to check for increase or decrease in deaths for a more clearer picture		
+function EthnicityDeathResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:3, desc:false});
+
+var options = {
+				height: 400,
+				//legend: 'none',
+				bars: 'horizontal',
+				colors:['#756bb1','#fec44f','#c51b8a'],
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Death rate because of opioids misuse categorized by Ethnicity -Maximum deaths are of Non-hispanic White ',
+				hAxis: {title: 'Year'},
+				vAxis: {title: 'Deaths'}
+			};
+		var chart = new google.visualization.ComboChart(
+		document.getElementById('EthnicityDeath_div'));
+		chart.draw(data, options);
+	}	
+	
+//Defining the Response Handler for DEATHS in the year 2017	
+function DrugDeathYear17ResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+
+		var options = {
+          region: 'US', // USA
+		  resolution: 'provinces',
+          colorAxis: {colors: ['#fff7bc','#fec44f','#d95f0e']},
+          datalessRegionColor: '#f8bbd0',
+          defaultColor: '#f5f5f5'
+		  };
+		 //Making Use of the Geo Map 
+        var chart = new google.visualization.GeoChart(
+		document.getElementById('DrugDeath17_div'));
+		chart.draw(data, options);
+		
+	}
+	
+	
+	
+		
+	
+//Defining the Response Handler for DEATHS - as percentage Increase/ Decrease in death Toll from the year 2015 to 2016		[GEOMAP]
+function PercentChangeResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+                region: 'US', // USA
+		        resolution: 'provinces',
+				height: 400,
+				width: 900,
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Increase/ Decrease in death Toll from the year 2015 to 2016',
+				vAxis: {title: 'States'},
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#31a354','#fff7bc','#de2d26']
+			};
+        var chart = new google.visualization.GeoChart(
+		document.getElementById('rate_div'));
+		chart.draw(data, options);
+		
+		}
+//Defining the Response Handler for DEATHS as PERCENTAGE Increase/ Decrease in death Toll from the year 2015 to 2016		[Table Format]	
+function PercentTableChangeResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+				height: 400,
+				width:400,
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: 'Increase and Decrease in Death Toll from 2015 to 2016 Table format.',
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#fee0d2', '#fc9272','#de2d26']
+			};
+        var chart = new google.visualization.Table(
+		document.getElementById('ratetable_div'));
+		chart.draw(data, options);
+		
+		}
+		
+//Defining the Response Handler for DEATHS - as percentage Increase/ Decrease in death Toll from the year 2016 to 2017		[GEOMAP]		
+function PercentChangeMapResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+               region: 'US', // USA
+		       resolution: 'provinces',
+				height: 400,
+				width :900,
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title:  'Increase/ Decrease in death Toll from the year 2016 to 2017',
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#31a354','#fff7bc','#de2d26']
+			};
+        var chart = new google.visualization.GeoChart(
+		document.getElementById('ratemap_div'));
+		chart.draw(data, options);
+		
+		}
+//Defining the Response Handler for DEATHS as PERCENTAGE Increase/ Decrease in death Toll from the year 2016 to 2017		[Table Format]			
+function PercentTableChangeNewResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+				height: 400,
+				width :400,
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: ' Increase and Decrease in Death Toll from 2016 to 2017 Table format.',
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#fee0d2', '#fc9272','#de2d26']
+			};
+        var chart = new google.visualization.Table(
+		document.getElementById('ratetablenew_div'));
+		chart.draw(data, options);
+		
+		}	
+		
+//Defining the Response Handler for DEATHS as PERCENTAGE Increase/ Decrease in death rate per 100,000 people from the year 2015 to 2016		[Table Format]		
+function DifferenceResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+				height: 400,
+				width :400,
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				title: ' Increase and Decrease in Death Rate from 2015 to 2016 Table format.',
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#fee0d2', '#fc9272','#de2d26']
+			};
+        var chart = new google.visualization.Table(
+		document.getElementById('diff_div'));
+		chart.draw(data, options);
+		
+		}	
+//Defining the Response Handler for DEATHS per 100,000 people for the year 2015 Based on  population (Geo Map)			
+ function AdjustedDeathRate2015ResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+                region: 'US', // USA
+		        resolution: 'provinces',
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#fde0dd','#fa9fb5','#c51b8a']
+			};
+        var chart = new google.visualization.GeoChart(
+		document.getElementById('rate2015_div'));
+		chart.draw(data, options);
+		
+		}
+
+//Defining the Response Handler for DEATHS per 100,000 people for the year 2016 Based on  population (Geo Map)				
+function AdjustedDeathRate2016ResponseHandler(response) {
+		   var data = response.getDataTable();
+           data.sort({column:1, desc:true});
+
+var options = {
+                region: 'US', // USA
+		        resolution: 'provinces',
+				bars: 'horizontal',
+				isStacked: true,
+				annotations: {alwaysOutside: true},
+				vAxis: {title: 'States'},
+				hAxis: {title: 'Percent Change'},
+				colors: ['#fde0dd','#fa9fb5','#c51b8a']
+			};
+        var chart = new google.visualization.GeoChart(
+		document.getElementById('rate2016_div'));
+		chart.draw(data, options);
+		
+		}
+			
+		  </script>
+	</head>
+	<body>
+	
+<h1> <center>Understanding the Opioid Epidemic in the United States of America</center> </h1>
+<center><p style="font-family:verdana;"> In 2016, 11.5 million people misused prescription opioids and it resulted in 42,249 deaths due to overdose in the United States.  In 2017 US Department of Health and Human Services declared a public health emergency.</p></center>
+<center><p style ="font-family:verdana;">A study states that the use of opioids could kill as many as half a million people in the coming decade. The reasons, for this epidemic might be complex. Insights and a clear picture can be obtained with the help of data visualization.</p> </center>
+<br></br>
+
+<h2> <center> Total number of Opioid Overdose deaths for the year 2017 </center>  </h2>
+
+
+<center><div id="DrugDeath17_div" style="width: 900px; height: 500px"></div></center>
+
+<br></br>
+
+<h2><center> Total number of Opioid Overdose deaths classified based on Gender </center> </h2>
+<table><tr>
+<td><div id="genderdeaths_div" style="width: 900px; height: 500px"></td>
+<td><div id="gendertotal_div" style="width: 900px; height: 500px"></td>
+</tr></table>
+
+<h2> <center> Total number of Opioid Overdose deaths categorized based on Age Group </center></h2>
+<table><tr>
+<td><div id="Age_div" style="width: 900px; height: 500px"></div></td>
+<td><div id="AgeDeath_div" style="width: 900px; height: 500px"></div></td>
+</tr></table>
+<h2> <center>Total number of Opioid Overdose deaths categorized based on Ethnicity</center> </h2>
+<table><tr>
+<td><div id="Ethnicity_div" style="width: 900px; height: 500px"></div></td>
+<td><div id="EthnicityDeath_div" style="width: 900px; height: 500px"></div></td>
+</tr></table>
+<h2> <center> Fluctuations in Death Toll due to Opioid between 2015 to 2016 </center> </h2>
+<table><tr>
+<td><div id="rate_div" style="width: 900px; height: 500px"></div></td>
+<td><div id="ratetable_div" style="width: 900px; height: 700px"></div></td>
+</tr></table>
+<h2> <center>Fluctuations in Death Toll due to Opioid between 2016 to 2017 </center> </h2>
+<table><tr>
+<td><div id="ratemap_div" style="width: 900px; height: 500px"></div></td>
+<td><div id="ratetablenew_div" style="width: 900px; height: 700px"></div></td>
+</tr></table>
+<table><tr>
+
+<h2> <center> Deaths due to Opioid Overdoses per 100,000 people by state for the year 2015 and 2016 </center> </h2>
+<td><div id="rate2015_div" style="width: 800px; height: 500px"></div></td>
+<td><div id="diff_div" style="width: 200px; height: 500px"></div></td>
+<td><div id="rate2016_div" style="width: 800px; height: 500px"></div></td>
+
+</tr></table>
+<br></br>
+<center><p style="font-family:verdana;">  States with statistically significant increases in drug overdose death rates included Connecticut, Delaware, Florida, Illinois, Indiana, Kentucky, Louisiana, Maine, Maryland, Massachusetts, Michigan, Minnesota, Missouri, New Jersey, New York, North Carolina, Ohio, Oklahoma, Pennsylvania, South Carolina, Tennessee, Texas, Vermont, Virginia, West Virginia, and Wisconsin.</p></center>
+<table><tr>
+<td><h2><left> <a href="Module 2 Medicare Claims.html">Module 2 - Medicare and Prescription Analysis</a> </left> </h2></td>
+
+<td><h2><right> &emsp; &emsp; &emsp; &emsp; &emsp;&emsp;<a href="Module 3 Correlation.html">Module 3 - Factors affecting Opioids usage and related Deaths</a> </right></h2></td>
+</tr></table>
+
+</body>
+</html>

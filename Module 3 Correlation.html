@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+
+    <script type = "text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type = "text/javascript" src = "https://www.google.com/jsapi"></script>
+	<script type = "text/javascript">
+//Loading all the chart Libraries
+google.charts.load('current' ,{'packages' : ['corechart']});
+google.charts.load('current', {'packages':['treemap']});
+google.charts.load("current", {packages: ['annotationchart']});
+google.charts.load('current', { 'packages': ['map'] });
+google.charts.setOnLoadCallback(DrawingSheets);
+	
+//Function where in all the responseHandlers are declared
+//A 'Response Handler' is the closure that is executed to parse the HTTP response that is returned from the server.		
+function DrawingSheets() {
+	
+drawSheetNameSecond('GDPvsOpioidUse', 'SELECT B,C,D,E',
+                                     GDPOpioidResponseHandler);	 //Response Handler for finding relation between opioid Usage and state GDP
+									 
+									 
+drawSheetNameSecond('GraduateOpioid', 'SELECT B,C,D,E',
+                                     GraduateOpioidResponseHandler);	//Response Handler for finding relation between College Graduation rate and state GDP
+									 
+
+}									 
+
+//Making use of the google API that is the google docs, linking the sheet to access the data									
+function drawSheetNameSecond(sheetName, query, responseHandler) {
+	var queryString = encodeURIComponent(query);
+	var query = new google.visualization.Query(
+	           
+              'https://docs.google.com/spreadsheets/d/1JPHYN_lUPpEzYobG812IoIBaZ72Esp4CX8Es2zZcJZY/gviz/tq?sheet='
+			   + sheetName + '&headers=1&tq=' + queryString);
+	       query.send(responseHandler);
+	   
+	}	
+
+
+//Defining the Response Handler for finding relation between opioid Usage and state GDP  
+//They are inversely correlated with a strong coefficient
+//Lower the GDP, poorer the state and higher the opioid usage overdose and realted deaths
+function GDPOpioidResponseHandler(response) {
+		  
+		var data = response.getDataTable();
+	    data.sort({column: 3, desc: true});
+	 var view = new google.visualization.DataView(data);
+     
+       
+			var options = {
+			        title:' The GDP and Opioid usage are inversely correlated with a negative correlation coefficient of 0.79',
+					bubblesize : 3,
+					 bubble: {textStyle: {fontSize: 9}},
+					 sizeAxis: {minSize: 10, maxSize:20},
+					hAxis:{
+					
+					 viewWindowMode:'explicit',
+              viewWindow:{
+                max:0.55,
+                min:0.001},
+					title:'opioid claim percentage'},
+					vAxis:{
+					viewWindow :{min :35000, max : 80000},
+					title:'GDP in USD Millions'},
+					legend: 'none',
+                trendlines: {
+                        0: {
+                       type: 'polynomial',
+                       degree: 3,
+                       visibleInLegend: true,
+                        } },
+					colors: ['#f7fcb9','#addd8e','#31a354']
+				       };
+			
+			        var chart = new google.visualization.BubbleChart(
+					document.getElementById('gdpopioid_div')); //Passing the object
+			        chart.draw(data, options);
+		
+		}
+		
+
+//Defining the Response Handler for finding relation between opioid Usage and state College Graduate Rate  
+//They are inversely correlated with a strong coefficient
+//Lower the College Graduation rate, higher the opioid usage overdose and realted deaths  
+function GraduateOpioidResponseHandler(response) {
+		  
+		var data = response.getDataTable();
+	    data.sort({column: 3, desc: true});
+	 var view = new google.visualization.DataView(data);
+     
+       
+			var options = {
+			        title:'The College Graduation rate and opioid usage are inversely correlated with a negative correlation coefficient of 0.69 ',
+					bubblesize : 3,
+					 bubble: {textStyle: {fontSize: 9}},
+					 sizeAxis: {minSize: 10, maxSize:20},
+					hAxis:{
+					
+					 viewWindowMode:'explicit',
+              viewWindow:{
+                max:0.55,
+                min:0.001},
+					title:'opioid claim percentage'},
+					vAxis:{
+					title:'Graduate Rate'},
+                trendlines: {
+                        0: {
+                       type: 'polynomial',
+                       degree: 3,
+                       visibleInLegend: true,
+                        } },
+					colors: [ '#fde0dd', '#fa9fb5' ,'#c51b8a']
+				       };
+			
+			        var chart = new google.visualization.BubbleChart(
+					document.getElementById('opioidgraduate_div'));     //Passing the object
+			        chart.draw(data, options);
+		
+		}
+  
+		
+		   
+		
+		  </script>
+	</head>
+	<body>	
+<h1><center>Understanding the various factors that affect Opioid Usage</center></h1>	
+<br></br>
+<br></br>
+<left><p style="font-family:verdana;"> The U.S. opioid epidemic has taken the lives of rising numbers of people with all levels of education.</p></left>
+<left><p style="font-family:verdana;">However, deaths have grown increasingly more concentrated among those with lower levels of education, particularly among non-Hispanic whites</p></left>
+<left><p style="font-family:verdana;">More-educated adults in the United States tend to live longer than less-educated individuals. The differences increase in a stair-step pattern by education level, with the widest difference between college graduates and those without high school degrees.</p></left>
+<left><p style="font-family:verdana;">This gap has widened over the past two decades, resulting in part from steep increases in drug overdose deaths among those without college degrees, reports Ho in an article published in the journal Demography</p></left>
+
+<table><tr>
+<td><div id="gdpopioid_div" style="width: 1000px; height: 1000px"></div></td>
+<td><div id="opioidgraduate_div" style="width: 1000px; height: 1000px"></div></td>
+<br></br>
+</tr></table>
+<br></br>
+<table><tr>
+</tr></table>
+<table><tr>
+<td><h2><left><a href="Module 1 Opioid Deaths.html">Module 1 - Understanding the Opioid Epidemic</a></left> </h2></td>
+<td><h2><right> &emsp; &emsp; &emsp; &emsp; &emsp;&emsp; <a href="Module 2 Medicare Claims.html">Module 2 - Medicare and Prescription Analysis</a></right></h2></td>
+</tr></table>
+
+</body>
+</html>
